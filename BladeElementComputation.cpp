@@ -62,6 +62,8 @@ BladeAeroCalculator::BladeAeroCalculator(string x_filename, string y_filename){
     this->F_a = \
         Eigen::MatrixX<data_cat>::Zero(this->Number_of_BladeElements,3);
     
+    this->leading_edge_relative_to_inertia <<0.0, 0.0, 0.0;
+
     this->CoM<<0.0, 0.0, 0.0;
     Eigen::VectorX<data_cat> COM_x_with_dim_of_Number_of_BladeElements = this->CoM[0] *\
         this->Ones_vect_with_dim_of_Number_of_BladeElements;
@@ -85,20 +87,22 @@ BladeAeroCalculator::BladeAeroCalculator(string x_filename, string y_filename){
     cout<<"@STATE:Initial values settled!!!"<<endl;
 }
 
-Eigen::VectorX<data_cat>  BladeAeroCalculator:: vec_Normalize(Eigen::VectorX<data_cat> input){
+Eigen::VectorX<data_cat>  BladeAeroCalculator:: vec_Normalize(Eigen::VectorX<data_cat> & input){
     data_cat frac = SMALL_CONSTANT_4_NORMALIZATION + input.norm();
     return 1 / frac * input;
 }
 
-Eigen::MatrixX<data_cat> BladeAeroCalculator:: mat_Normalize(Eigen::MatrixX<data_cat> input_mat){
+Eigen::MatrixX<data_cat> BladeAeroCalculator:: mat_Normalize(Eigen::MatrixX<data_cat> & input_mat){
     Eigen::MatrixX<data_cat> output_mat = Eigen::MatrixX<data_cat>::Zero(input_mat.rows(), input_mat.cols());
     for (int i = 0; i < input_mat.rows(); i++){
-        output_mat.row(i) = BladeAeroCalculator:: vec_Normalize((Eigen::VectorX<data_cat>)input_mat.row(i));
+        Eigen::VectorX<data_cat> rowhere(input_mat.cols());
+         rowhere << input_mat.row(i).transpose();
+        output_mat.row(i) = BladeAeroCalculator:: vec_Normalize(rowhere);
     }
     return output_mat;
 }
 
-Eigen::MatrixX<data_cat>  BladeAeroCalculator:: mat_SecNorm(Eigen::MatrixX<data_cat> input_mat){
+Eigen::MatrixX<data_cat>  BladeAeroCalculator:: mat_SecNorm(Eigen::MatrixX<data_cat> & input_mat){
     Eigen::MatrixX<data_cat> output(input_mat.rows(), input_mat.cols());
     output = input_mat.cwiseProduct(input_mat);
     Eigen::MatrixX<data_cat> outputsum(input_mat.rows(), 1);
@@ -107,8 +111,8 @@ Eigen::MatrixX<data_cat>  BladeAeroCalculator:: mat_SecNorm(Eigen::MatrixX<data_
     return outputsum;
 }
 
-Eigen::MatrixX<data_cat> BladeAeroCalculator:: mat_vec_cross(Eigen::MatrixX<data_cat> input_mat, \
-    Eigen::VectorX<data_cat> input_vec){
+Eigen::MatrixX<data_cat> BladeAeroCalculator:: mat_vec_cross(Eigen::MatrixX<data_cat> & input_mat, \
+    Eigen::VectorX<data_cat> & input_vec){
   
     if ((input_vec.size() == 3) && (input_mat.cols() == 3)){
         Eigen::MatrixX<data_cat> output = Eigen::MatrixX<data_cat>::Zero(input_mat.rows(), input_mat.cols());
@@ -127,8 +131,8 @@ Eigen::MatrixX<data_cat> BladeAeroCalculator:: mat_vec_cross(Eigen::MatrixX<data
      return output;
 }
 
-Eigen::MatrixX<data_cat> BladeAeroCalculator:: vec_mat_cross(Eigen::VectorX<data_cat> input_vec, \
-    Eigen::MatrixX<data_cat> input_mat){
+Eigen::MatrixX<data_cat> BladeAeroCalculator:: vec_mat_cross(Eigen::VectorX<data_cat> & input_vec, \
+    Eigen::MatrixX<data_cat> & input_mat){
         return - BladeAeroCalculator::mat_vec_cross(input_mat, input_vec);
 }
 
@@ -166,14 +170,14 @@ int BladeAeroCalculator::CalcWingPlaneDirection(){
 
 int BladeAeroCalculator::RequestVelocities(Eigen::Vector<data_cat, 3> vel_FreeFlow,\
     Eigen::Vector<data_cat, 3> vel_body_translation,\
-    Eigen::Vector<data_cat, 3> vel_wing_rotation,\
+    Eigen::VectorX<data_cat> vel_wing_rotation,\
     data_cat vel_AoA){
     this->v_infi = vel_FreeFlow;
     this->v_t = vel_body_translation;
 
-    Eigen::MatrixX<data_cat> posLeadingEdgeVec_in_Inertia_frame = this->wing_rotation_relative_to_inertia * \
-        (this->posLeadingEdgeVec.transpose());
-    this->v_r = this->vec_mat_cross(vel_wing_rotation, posLeadingEdgeVec_in_Inertia_frame.transpose());
+    Eigen::MatrixX<data_cat> posLeadingEdgeVec_in_Inertia_frame_T = (this->wing_rotation_relative_to_inertia * \
+        (this->posLeadingEdgeVec.transpose())).transpose();
+    this->v_r = this->vec_mat_cross(vel_wing_rotation, posLeadingEdgeVec_in_Inertia_frame_T);
     
     this->v_AoA = vel_AoA;
     // this->v_r = 
@@ -262,9 +266,10 @@ int BladeAeroCalculator::CopmputeAerodynamicForce(){
     
     
     // #################### Directions computation #####################
-
-    Eigen::MatrixX<data_cat> _1st_comp_direc = this->mat_Normalize( this->vec_mat_cross( \
-        this->leading_edge_relative_to_inertia, this->eFV));
+    Eigen::VectorX<data_cat> X_leading_edge_relative_to_inertia = this->leading_edge_relative_to_inertia;
+    Eigen::MatrixX<data_cat> raw_1st_comp_direc = this->vec_mat_cross( \
+        X_leading_edge_relative_to_inertia, this->eFV);
+    Eigen::MatrixX<data_cat> _1st_comp_direc = this->mat_Normalize(raw_1st_comp_direc );
 
     for (int i = 0; i < _1st_comp_direc.rows(); i++){
         if ((_1st_comp_direc.row(i) * (this->chordwise_direction_relative_to_inertia))\

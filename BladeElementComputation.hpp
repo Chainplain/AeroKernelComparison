@@ -109,13 +109,13 @@ class BladeAeroCalculator
         BladeAeroCalculator(string x_filename, string y_filename);
 
         /*Vector  normilzer bt sqrt*/
-        static Eigen::VectorX<data_cat>  vec_Normalize(Eigen::VectorX<data_cat> input_vec);
-        static Eigen::MatrixX<data_cat>  mat_Normalize(Eigen::MatrixX<data_cat> input_mat);
+        static Eigen::VectorX<data_cat>  vec_Normalize(Eigen::VectorX<data_cat> & input_vec);
+        static Eigen::MatrixX<data_cat>  mat_Normalize(Eigen::MatrixX<data_cat> & input_mat);
          /*If the input is a matrix, then we render this as vertically stacked vector,
         and we return the */
-        static Eigen::MatrixX<data_cat>  mat_SecNorm(Eigen::MatrixX<data_cat> input_mat);
-        static Eigen::MatrixX<data_cat>  mat_vec_cross(Eigen::MatrixX<data_cat> input_mat, Eigen::VectorX<data_cat> input_vec);
-        static Eigen::MatrixX<data_cat>  vec_mat_cross(Eigen::VectorX<data_cat> input_vec, Eigen::MatrixX<data_cat> input_mat);
+        static Eigen::MatrixX<data_cat>  mat_SecNorm(Eigen::MatrixX<data_cat> & input_mat);
+        static Eigen::MatrixX<data_cat>  mat_vec_cross(Eigen::MatrixX<data_cat> & input_mat, Eigen::VectorX<data_cat> & input_vec);
+        static Eigen::MatrixX<data_cat>  vec_mat_cross(Eigen::VectorX<data_cat> & input_vec, Eigen::MatrixX<data_cat> & input_mat);
 
        
         int SetAverageReynoldsNumberAndDecideCoeffs(data_cat Input_Desire_avReynoldsNumber);
@@ -131,7 +131,7 @@ class BladeAeroCalculator
         int CalcWingPlaneDirection();
         int RequestVelocities(Eigen::Vector<data_cat, 3> vel_FreeFlow,\
                               Eigen::Vector<data_cat, 3> vel_body_translation,\
-                              Eigen::Vector<data_cat, 3> vel_wing_rotation,\
+                              Eigen::VectorX<data_cat> vel_wing_rotation,\
                               data_cat vel_AoA);
         int CalcEffectiveVelocity();
         int CalcAoA();

@@ -63,7 +63,7 @@ int main()
         indicator++;
     }
     endTime = clock();
-    cout<<"A single loop is complete!!"<<endl;
+    cout<<"A single loop is completed!!"<<endl;
     cout<<"Comsume time of "<< (double(endTime-startTime))/CLOCKS_PER_SEC<<endl;
     // cout<< LU_velVec(Eigen::seq(0, 2)) <<endl;
     // cout<< LU_velVec(Eigen::seq(3, 5)) <<endl;
