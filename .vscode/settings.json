@@ -48,6 +48,10 @@
     "superlusupport": "cpp",
     "valarray": "cpp",
     "deque": "cpp",
-    "chrono": "cpp"
+    "chrono": "cpp",
+    "array": "cpp",
+    "hash_map": "cpp",
+    "initializer_list": "cpp",
+    "utility": "cpp"
   }
 }
